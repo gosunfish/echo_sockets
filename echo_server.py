@@ -18,7 +18,9 @@ def server(log_buffer=sys.stderr):
 
     # TODO: bind your new sock 'sock' to the address above and begin to listen
     #       for incoming connections
-    sock.bind(('127.0.0.1', 10000))
+    sock.bind(address)
+    sock.listen(1)
+
 
     try:
         # the outer loop controls the creation of new connection sockets. The
@@ -31,8 +33,7 @@ def server(log_buffer=sys.stderr):
             #       the client so we can report it below.  Replace the
             #       following line with your code. It is only here to prevent
             #       syntax errors
-            conn = socket.socket(socket.AF_INET)
-            addr = conn.gethostbyname(conn.gethostname(conn.connect(('127.0.0.1', 10000))))
+            conn, addr = sock.accept()
 
             try:
                 print >>log_buffer, 'connection - {0}:{1}'.format(*addr)
@@ -40,6 +41,7 @@ def server(log_buffer=sys.stderr):
                 # the inner loop will receive messages sent by the client in
                 # buffers.  When a complete message has been received, the
                 # loop will exit
+                alldata = ''
                 while True:
                     # TODO: receive 16 bytes of data from the client. Store
                     #       the data you receive as 'data'.  Replace the
@@ -48,15 +50,14 @@ def server(log_buffer=sys.stderr):
                     #       formatting
                     data = conn.recv(16)
                     print >>log_buffer, 'received "{0}"'.format(data)
-
+                    alldata = '{}{}'.format(alldata, data)
                     # TODO: you will need to check here to see if any data was
                     #       received.  If so, send the data you got back to
                     #       the client.  If not, exit the inner loop and wait
                     #       for a new connection from a client
-                    if len(data) > 0:
-                        conn.sendall()
-                    else:
-                        exit
+                    if len(data) < 16:
+                        conn.sendall(alldata)
+                        break
             finally:
                 # TODO: When the inner loop exits, this 'finally' clause will
                 #       be hit. Use that opportunity to close the socket you
@@ -66,7 +67,7 @@ def server(log_buffer=sys.stderr):
                 conn.close()
 
     except KeyboardInterrupt:
-        # TODO: Use the python KeyboardIntterupt exception as a signal to
+        # TODO: Use the python KeyboardInterrupt exception as a signal to
         #       close the server socket and exit from the server function.
         #       Replace the call to `pass` below, which is only there to
         #       prevent syntax problems
